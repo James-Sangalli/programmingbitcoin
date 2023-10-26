@@ -293,7 +293,20 @@ class ECCTest(TestCase):
         # initialize x's and y's as FieldElements
         # create p1, p2 and p3 as Points
         # check p1+p2==p3
-        raise NotImplementedError
+        for x1r, y1r, x2r, y2r, x3r, y3r in additions: 
+                x1 = FieldElement(x1r, prime)
+                y1 = FieldElement(y1r, prime)
+                x2 = FieldElement(x2r, prime)
+                y2 = FieldElement(y2r, prime)
+                x3 = FieldElement(x3r, prime)
+                y3 = FieldElement(y3r, prime)
+                p1 = Point(x1, y1, a, b)
+                p2 = Point(x2, y2, a, b)
+                p3 = Point(x3, y3, a, b)
+                self.assertEqual(p1 + p2, p3)
+                
+        # raise NotImplementedError
+    
 
     def test_rmul(self):
         # tests the following scalar multiplications
