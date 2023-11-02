@@ -716,7 +716,17 @@ def op_checkmultisig(stack, z):
                 # we check if this signature goes with the current point
         # the signatures are valid, so push a 1 to the stack
         # tag::source1[]
-        raise NotImplementedError  # <3>
+        for s in der_signatures:
+            passed = False
+            sig = Signature.parse(s)
+            for pk in sec_pubkeys:
+                p = S256Point.parse(pk)
+                if p.verify(z, sig) == True:
+                    passed = True
+            if passed != True:
+                return False
+                
+        stack.append(encode_num(1))
     except (ValueError, SyntaxError):
         return False
     return True
