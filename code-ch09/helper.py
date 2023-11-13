@@ -163,9 +163,9 @@ def calculate_new_bits(previous_bits, time_differential):
     # convert the new target to bits
     if time_differential > TWO_WEEKS * 4:
         time_differential = TWO_WEEKS * 4
-    if time_differential < TWO_WEEKS / 4:
-        time_differential = TWO_WEEKS / 4
-    new_target = target_to_bits(previous_bits) * time_differential / TWO_WEEKS
+    if time_differential < TWO_WEEKS // 4:
+        time_differential = TWO_WEEKS // 4
+    new_target = target_to_bits(previous_bits) * time_differential // TWO_WEEKS
     if new_target > MAX_TARGET:
         new_target = MAX_TARGET
     return target_to_bits(new_target)
