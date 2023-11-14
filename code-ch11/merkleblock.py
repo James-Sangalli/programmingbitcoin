@@ -196,7 +196,21 @@ class MerkleBlock:
         # length of flags field - varint
         # read the flags field
         # initialize class
-        raise NotImplementedError
+        version = little_endian_to_int(s.read(4))
+        prev_block = s.read(32)[::-1]
+        merkle_root = s.read(32)[::-1]
+        timestamp = little_endian_to_int(s.read(4))
+        bits = s.read(4)
+        nonce = s.read(4)
+        total = little_endian_to_int(s.read(4))
+        num_tx_hashes = read_varint(s)
+        hashes = []
+        for i in range(num_tx_hashes):
+            hashes.append(s.read(32)[::-1])
+        flags_len = read_varint(s)
+        flags = s.read(flags_len)
+        
+        return cls(version, prev_block, merkle_root, timestamp, bits, nonce, total, hashes, flags)
 
     def is_valid(self):
         '''Verifies whether the merkle tree information validates to the merkle root'''
@@ -205,7 +219,18 @@ class MerkleBlock:
         # initialize the merkle tree
         # populate the tree with flag bits and hashes
         # check if the computed root reversed is the same as the merkle root
-        raise NotImplementedError
+        # flag_bits = bytes_to_bit_field(self.flags)
+        # root = self.merkle_root[::-1]
+        # tree = []
+        # for i in range(len(root)):
+        #     tree.append(root[i])
+        #     tree.append(flag_bits[i])
+        # return tree[::-1] == root[::-1]
+        flag_bits = bytes_to_bit_field(self.flags)
+        hashes = [h[::-1] for h in self.hashes]
+        merkle_tree = MerkleTree(self.total)
+        merkle_tree.populate_tree(flag_bits, hashes)
+        return merkle_tree.root()[::-1] == self.merkle_root
 
 
 class MerkleBlockTest(TestCase):
