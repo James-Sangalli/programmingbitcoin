@@ -57,7 +57,12 @@ class NetworkEnvelope:
         # payload is of length payload_length
         # verify checksum
         # return an instance of the class
-        raise NotImplementedError
+        command = s.read(12).rstrip(b'\x00')
+        length = little_endian_to_int(s.read(4))
+        checksum = s.read(4)
+        payload = s.read(length)
+        
+        return NetworkEnvelope(command, payload, testnet)
 
     def serialize(self):
         '''Returns the byte serialization of the entire network message'''
@@ -67,7 +72,19 @@ class NetworkEnvelope:
         # payload length 4 bytes, little endian
         # checksum 4 bytes, first four of hash256 of payload
         # payload
-        raise NotImplementedError
+        # magic = NETWORK_MAGIC
+        # s = self.command
+        # s += self.payload
+        # h = hash256(self.payload)
+        # s += h[:4]
+        # s += self.payload
+        # return s
+        result = self.magic
+        result += self.command + b'\x00' * (12 - len(self.command))
+        result += int_to_little_endian(len(self.payload), 4)
+        result += hash256(self.payload)[:4]
+        result += self.payload
+        return result
 
     def stream(self):
         '''Returns a stream for parsing the payload'''
@@ -146,7 +163,28 @@ class VersionMessage:
         # useragent is a variable string, so varint first
         # latest block is 4 bytes little endian
         # relay is 00 if false, 01 if true
-        raise NotImplementedError
+        s = int_to_little_endian(self.version, 4)
+        s += int_to_little_endian(self.services, 8)
+        s += int_to_little_endian(self.timestamp, 8)
+        s += int_to_little_endian(self.receiver_services, 8)
+        #s += b'1000ff' + self.receiver_ip
+        s += b'\x00' * 10 + b'\xff\xff' + self.receiver_ip
+        s += self.receiver_port.to_bytes(2, 'big') # int.from_bytes(self.receiver_port, 'big')
+        s += int_to_little_endian(self.sender_services, 8)
+        #s += b'1000ff' + self.sender_ip
+        s += b'\x00' * 10 + b'\xff\xff' + self.sender_ip
+        s += self.sender_port.to_bytes(2, 'big') # int.from_bytes(self.sender_port, 2)
+        s += self.nonce
+        # s += encode_varint(int.from_bytes(self.user_agent))
+        s += encode_varint(len(self.user_agent))
+        s += self.user_agent
+        s += int_to_little_endian(self.latest_block, 4)
+        if self.relay:
+            s += b'\x01'
+        else:
+            s += b'\x00'
+        
+        return s
 
 
 class VersionMessageTest(TestCase):
@@ -224,7 +262,11 @@ class GetHeadersMessage:
         # number of hashes is a varint
         # start block is in little-endian
         # end block is also in little-endian
-        raise NotImplementedError
+        s = int_to_little_endian(self.version, 4)
+        s += encode_varint(self.num_hashes)
+        s += int_to_little_endian(int.from_bytes(self.start_block), 32)
+        s += int_to_little_endian(int.from_bytes(self.end_block), 32)
+        return s
 
 
 class GetHeadersMessageTest(TestCase):
@@ -288,7 +330,9 @@ class SimpleNode:
         # create a version message
         # send the command
         # wait for a verack message
-        raise NotImplementedError
+        msg = VersionMessage()
+        result = self.send(msg)
+        return result
     # tag::source4[]
 
     def send(self, message):  # <1>
