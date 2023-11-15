@@ -316,7 +316,11 @@ class GetDataMessage:
         # loop through each tuple (data_type, identifier) in self.data
             # data type is 4 bytes Little-Endian
             # identifier needs to be in Little-Endian
-        raise NotImplementedError
+        s = encode_varint(len(self.data))
+        for item in self.data:
+            s += int_to_little_endian(item[0], 4)
+            s += item[1][::-1] # int_to_little_endian(item[1], 4)
+        return s
 
 
 class GetDataMessageTest(TestCase):
